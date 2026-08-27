@@ -1,0 +1,15 @@
+{
+	"key.category.skyaid.main": "SkyAid",
+	"key.skyaid.toggle_hud": "Toggle Skyblock HUD",
+	"key.skyaid.toggle_mod": "Toggle SkyAid",
+	"key.skyaid.open_settings": "Open SkyAid settings",
+	"key.skyaid.share_location": "Prefill chat with your location",
+	"key.skyaid.open_bazaar": "Open the bazaar",
+  "key.skyaid.mouse_lock_1": "Hold for mouse lock 1",
+  "key.skyaid.mouse_lock_2": "Hold for mouse lock 2",
+  "key.skyaid.mouse_lock_3": "Hold for mouse lock 3",
+  "key.skyaid.mouse_lock_4": "Hold for mouse lock 4",
+  "key.skyaid.mouse_lock_5": "Hold for mouse lock 5",
+  "key.skyaid.mouse_lock_6": "Hold for mouse lock 6",
+  "key.skyaid.mouse_lock_enable": "Enable / disable mouse lock"
+}

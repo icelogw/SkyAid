@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "skyaid",
+	"version": "${version}",
+	"name": "SkyAid",
+	"description": "SkyAid shows you information - prices, progress, markers, timers - and tracks your stats while you play.",
+	"authors": [
+		"icelogw"
+	],
+	"license": "GPL-3.0-only",
+	"icon": "assets/skyaid/icon.png",
+	"environment": "client",
+	"accessWidener": "skyaid.accesswidener",
+	"mixins": [
+		"skyaid.mixins.json"
+	],
+	"entrypoints": {
+		"client": [
+			"dev.skyaid.SkyAidClient"
+		],
+		"modmenu": [
+			"dev.skyaid.config.ModMenuIntegration"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"hypixel-mod-api": ">=1.0.2",
+		"modmenu": "*"
+	}
+}

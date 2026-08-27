@@ -1,0 +1,24 @@
+accessWidener v2 official
+
+# The boss bars on screen. Hypixel presents the zone-quest objective as a boss
+# bar ("Objective: Talk to Fisherwoman Enid."), not a sidebar line - reading it
+# is the only way to show the objective on the HUD. Vanilla keeps the map
+# private with no accessor.
+accessible field net/minecraft/client/gui/components/BossHealthOverlay events Ljava/util/Map;
+
+# The sign editor's typed lines. Hypixel's AH and bazaar searches ARE sign
+# editors, and search history plus autofill need to read what is being typed
+# and to fill a clicked suggestion in. Vanilla keeps the array private.
+accessible field net/minecraft/client/gui/screens/inventory/AbstractSignEditScreen messages [Ljava/lang/String;
+
+# The sign block and face behind the editor. SkyAid's market search screen
+# suppresses vanilla's automatic sign update (it fires empty the moment the
+# replacement screen takes over) and sends the packet itself on submit -
+# which needs the sign's position and which face was being edited.
+accessible field net/minecraft/client/gui/screens/inventory/AbstractSignEditScreen sign Lnet/minecraft/world/level/block/entity/SignBlockEntity;
+accessible field net/minecraft/client/gui/screens/inventory/AbstractSignEditScreen isFrontText Z
+
+# Container screen position, so the terminal overlays can wash the correct
+# slots of Hypixel's F7 terminal GUIs. Vanilla keeps both protected.
+accessible field net/minecraft/client/gui/screens/inventory/AbstractContainerScreen leftPos I
+accessible field net/minecraft/client/gui/screens/inventory/AbstractContainerScreen topPos I

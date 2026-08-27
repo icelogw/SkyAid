@@ -1,0 +1,192 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	// Hypixel's official Mod API - lets the mod receive structured server data
+	// (location/mode/map) over Hypixel's own sanctioned plugin-message channel.
+	maven {
+		name = 'Hypixel'
+		url = 'https://repo.hypixel.net/repository/Hypixel/'
+	}
+
+	// Mod Menu, for the settings button beside SkyAid in its mod list.
+	maven {
+		name = 'Terraformers'
+		url = 'https://maven.terraformersmc.com/releases'
+	}
+}
+
+loom {
+	// This mod is client-only: there is no server-side component, so we do not
+	// call splitEnvironmentSourceSets(). Everything lives in src/main and is
+	// marked "environment": "client" in fabric.mod.json.
+
+	accessWidenerPath = file("src/main/resources/skyaid.accesswidener")
+}
+
+// The user plays through the Dawn launcher, profile "skyaid" (moved off
+// "main" 2026-08-24). Copying the jar there on every build turns the dev loop
+// into just: build, restart the game.
+// Guarded so the project still builds on a machine without Dawn installed.
+//
+// NEVER copy while the Dawn game is running: Java loads mod classes from the
+// jar lazily, so swapping the file under a live game corrupts its view of the
+// zip and crashes it the moment an unloaded class is touched. That is not a
+// theory - it happened (ZipException: invalid LOC header, 2026-08-20).
+tasks.register('deployToDawn', Copy) {
+	from tasks.jar
+	into "${System.getenv('APPDATA')}/.dawn/profiles/skyaid/.minecraft/mods"
+
+	onlyIf {
+		if (System.getenv('APPDATA') == null ||
+				!file("${System.getenv('APPDATA')}/.dawn/profiles/skyaid/.minecraft/mods").exists()) {
+			return false
+		}
+
+		// The game is a java process whose EXECUTABLE lives under .dawn (Feather
+		// bundles its runtime inside the .dawn cache). Checked via command(),
+		// the exe path - NOT commandLine(): on Windows the JDK returns an empty
+		// commandLine() for the game's ~19k-char invocation, which made this
+		// guard silently pass and hot-swap jars under a live game (2026-08-20).
+		boolean dawnRunning = ProcessHandle.allProcesses().anyMatch { process ->
+			process.info().command()
+					.map { path ->
+						path.contains('.dawn') && (path.endsWith('javaw.exe')
+								|| path.endsWith('java.exe'))
+					}
+					.orElse(false)
+		}
+
+		if (dawnRunning) {
+			logger.lifecycle('deployToDawn SKIPPED: the Dawn client is running, and ' +
+					'swapping the jar under it would crash it. Close the game and rebuild.')
+		}
+
+		return !dawnRunning
+	}
+}
+
+// Second test bed: the official launcher's Fabric profile (set up
+// 2026-08-24 to test the vanilla title-screen button with a real login,
+// which Dawn's custom menu hides). Same jar, same running-game guard - the
+// official launcher's bundled runtime lives under a "java-runtime" folder.
+tasks.register('deployToVanilla', Copy) {
+	from tasks.jar
+	into "${System.getenv('APPDATA')}/.minecraft/mods"
+
+	onlyIf {
+		if (System.getenv('APPDATA') == null ||
+				!file("${System.getenv('APPDATA')}/.minecraft/mods").exists()) {
+			return false
+		}
+
+		boolean vanillaRunning = ProcessHandle.allProcesses().anyMatch { process ->
+			process.info().command()
+					.map { path ->
+						path.contains('java-runtime') && (path.endsWith('javaw.exe')
+								|| path.endsWith('java.exe'))
+					}
+					.orElse(false)
+		}
+
+		if (vanillaRunning) {
+			logger.lifecycle('deployToVanilla SKIPPED: the official launcher game is ' +
+					'running. Close it and rebuild.')
+		}
+
+		return !vanillaRunning
+	}
+}
+
+// Dawn auto-deploy paused at the user's request (2026-08-25) - they play
+// through the official launcher now. `gradlew deployToDawn` still works
+// manually whenever the Dawn profile is needed again.
+build.finalizedBy tasks.named('deployToVanilla')
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Hypixel's Mod API core is platform-agnostic: packet classes plus an SPI that
+	// the separate "hypixel-mod-api" Fabric mod implements. compileOnly, not
+	// include: bundling it would ship duplicates of classes that mod already
+	// provides. The mod is optional at runtime - see fabric.mod.json "suggests" -
+	// and every use of it is guarded by an isModLoaded check, falling back to
+	// reading the scoreboard.
+	compileOnly "net.hypixel:mod-api:${project.hypixel_mod_api_version}"
+
+	// Mod Menu is optional. The class implementing its API is reachable only via
+	// the "modmenu" entrypoint, which nothing reads unless Mod Menu is installed,
+	// so compileOnly is safe: compiled against, never bundled, never required.
+	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	// Dev runtime only, so the Mod Menu integration can actually be tested with
+	// runClient. localRuntime never reaches the published jar.
+	localRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	// The parse/ package is deliberately free of Minecraft types so it can be
+	// unit tested without launching the game. That is the whole regression suite.
+	testImplementation platform('org.junit:junit-bom:5.11.4')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+processResources {
+	def props = [
+		version         : project.version,
+		minecraft_version: project.minecraft_version,
+		loader_version  : project.loader_version
+	]
+	inputs.properties props
+
+	filesMatching("fabric.mod.json") {
+		expand props
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	from("LICENSE") {
+		rename { "${it}_$projectName" }
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+
+	repositories {
+	}
+}

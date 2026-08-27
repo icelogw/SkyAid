@@ -1,0 +1,11 @@
+The files in this directory (dungeonrooms.json, secretlocations.json, and the
+catacombs/*.skeleton room data) are from the Dungeon Rooms Mod:
+
+    Copyright 2021 Quantizr(_risk)
+    https://github.com/Quantizr/DungeonRoomsMod
+    Licensed under the GNU General Public License v3.0
+
+SkyAid's room-identification and coordinate-transform logic is a re-implementation
+derived from that project's approach (RoomDetection/MapUtils), and this data is
+redistributed under the GPL-3.0. If SkyAid is ever distributed, the combined work
+must be licensed GPL-3.0-compatible.
