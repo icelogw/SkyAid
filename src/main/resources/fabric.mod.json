@@ -7,6 +7,10 @@
 	"authors": [
 		"icelogw"
 	],
+	"contact": {
+		"sources": "https://github.com/icelogw/SkyAid",
+		"homepage": "https://modrinth.com/project/skyaid"
+	},
 	"license": "GPL-3.0-only",
 	"icon": "assets/skyaid/icon.png",
 	"environment": "client",
