@@ -55,6 +55,15 @@ public final class PriceCommand {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) ->
 				dispatcher.register(ClientCommands.literal("skyaid")
 						.then(ClientCommands.literal("price")
+								// Bare "/skyaid price" must answer HERE - an
+								// unmatched client command falls through to
+								// the server, which shouts Unknown command.
+								.executes(context -> {
+									say(Component.literal(
+													"Usage: /skyaid price [AH|BZ] <item>")
+											.withStyle(ChatFormatting.GRAY));
+									return 1;
+								})
 								.then(ClientCommands.argument(
 												"item", StringArgumentType.greedyString())
 										.executes(context -> {
