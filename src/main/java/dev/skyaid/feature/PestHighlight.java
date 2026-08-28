@@ -57,8 +57,11 @@ public final class PestHighlight {
 	private static final double RELOCATE_DISTANCE_SQ = 10 * 10;
 	private static final int RELOCATE_VERTICAL = 3;
 
-	/** How long the guide line to a relocated pest stays up. */
-	private static final long LINE_MILLIS = 5_000;
+	/**
+	 * How long the guide line to a relocated pest stays up - long enough
+	 * to WALK there, since crossing plots is the whole point of it.
+	 */
+	private static final long LINE_MILLIS = 15_000;
 
 	/**
 	 * How long a vanished pest is remembered: one that reappears within
@@ -71,11 +74,12 @@ public final class PestHighlight {
 	}
 
 	/**
-	 * The fixed "it went from here" end of a relocation line. The other end
-	 * is wherever the pest is now, so the arrow tracks the bug, never the
-	 * player.
+	 * A relocation arrow: the fixed "it went from here" end and the last
+	 * KNOWN position of the pest. Both ends are world positions, so the
+	 * arrow survives the entity unloading when either of you walks far -
+	 * which is exactly when it is being followed.
 	 */
-	private record Trail(BlockPos from, long until) {
+	private record Trail(BlockPos from, BlockPos to, long until) {
 	}
 
 	private static int tickCounter;
@@ -126,21 +130,29 @@ public final class PestHighlight {
 
 			for (Marked pest : marked) {
 				MarkerRenderer.point(pest.pos(), pest.label(), COLOR);
+			}
 
-				// A pest that moved keeps a faint box at its OLD spot and a
-				// line from there to wherever it is NOW - an arrow showing
-				// the move itself, anchored to the world, not the player.
-				Trail trail = trails.get(pest.entityId());
-
-				if (trail != null && trail.until() > now) {
-					MarkerRenderer.boxDim(trail.from(), COLOR);
-					net.minecraft.gizmos.Gizmos.line(
-									net.minecraft.world.phys.Vec3.atCenterOf(trail.from()),
-									net.minecraft.world.phys.Vec3.atCenterOf(pest.pos()),
-									0xFF000000 | COLOR, 2.0f)
-							.persistForMillis(120)
-							.setAlwaysOnTop();
+			// The relocation arrows: a faint box at the OLD spot, a line to
+			// the pest's last known position, and - when the pest itself is
+			// out of sync range - a faint box at the destination too, so
+			// there is something to walk toward.
+			for (Trail trail : trails.values()) {
+				if (trail.until() <= now) {
+					continue;
 				}
+
+				MarkerRenderer.boxDim(trail.from(), COLOR);
+
+				if (!markedAt(trail.to())) {
+					MarkerRenderer.boxDim(trail.to(), COLOR);
+				}
+
+				net.minecraft.gizmos.Gizmos.line(
+								net.minecraft.world.phys.Vec3.atCenterOf(trail.from()),
+								net.minecraft.world.phys.Vec3.atCenterOf(trail.to()),
+								0xFF000000 | COLOR, 2.0f)
+						.persistForMillis(120)
+						.setAlwaysOnTop();
 			}
 		});
 	}
@@ -212,16 +224,23 @@ public final class PestHighlight {
 				BlockPos origin = reappearedFrom(pest.label(), now);
 
 				if (origin != null) {
-					trails.put(pest.entityId(), new Trail(origin, now + LINE_MILLIS));
+					trails.put(pest.entityId(),
+							new Trail(origin, pest.pos(), now + LINE_MILLIS));
 				}
 			} else if (relocated(previous.pos(), pest.pos())) {
 				trails.put(pest.entityId(), new Trail(previous.pos(),
-						now + LINE_MILLIS));
+						pest.pos(), now + LINE_MILLIS));
+			} else {
+				// The pest keeps crawling after the jump: the arrow's far
+				// end follows it while it stays in sight.
+				trails.computeIfPresent(pest.entityId(), (id, trail) ->
+						new Trail(trail.from(), pest.pos(), trail.until()));
 			}
 		}
 
 		// Ids gone this scan are remembered, with WHERE they were, for the
-		// reappear window - then dropped along with their trails.
+		// reappear window. Their trails deliberately survive - an unloaded
+		// entity is not a finished journey; the timer ends the arrow.
 		for (var entry : lastSeen.entrySet()) {
 			if (!seen.contains(entry.getKey())) {
 				vanished.add(new Vanished(entry.getValue().label(),
@@ -230,9 +249,20 @@ public final class PestHighlight {
 		}
 
 		lastSeen.keySet().retainAll(seen);
-		trails.keySet().retainAll(seen);
+		trails.values().removeIf(trail -> trail.until() <= now);
 
 		marked = found;
+	}
+
+	/** Whether a live pest marker already stands at this position. */
+	private static boolean markedAt(BlockPos pos) {
+		for (Marked pest : marked) {
+			if (pest.pos().equals(pos)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static boolean relocated(BlockPos previous, BlockPos current) {
