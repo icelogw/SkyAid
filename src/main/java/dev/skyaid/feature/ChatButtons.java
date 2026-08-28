@@ -35,9 +35,14 @@ public final class ChatButtons {
 
 	/**
 	 * The name line of Hypixel's social-options popup, remembered so the
-	 * button row that follows it knows who it is about.
+	 * button row that follows it knows who it is about. The popup's two
+	 * lines arrive together, so the memory is only trusted briefly - lobby
+	 * adverts in caps ("REWARDS") also look like bare names.
 	 */
 	private static String lastBareName;
+	private static long lastBareNameAt;
+
+	private static final long BARE_NAME_TRUST_MILLIS = 2_000;
 
 	private ChatButtons() {
 	}
@@ -57,7 +62,8 @@ public final class ChatButtons {
 			if (text.contains("[Report Player]") || text.contains("[Block Player]")) {
 				String target = socialName(text);
 
-				if (target == null) {
+				if (target == null && System.currentTimeMillis()
+						- lastBareNameAt < BARE_NAME_TRUST_MILLIS) {
 					target = lastBareName;
 				}
 
@@ -74,6 +80,7 @@ public final class ChatButtons {
 
 			if (bare.matches()) {
 				lastBareName = bare.group(1);
+				lastBareNameAt = System.currentTimeMillis();
 				dev.skyaid.SkyAidClient.LOGGER.info(
 						"Social options: remembered name {}", lastBareName);
 				return message;
