@@ -45,6 +45,7 @@ public final class SkyAidHelp {
 			new Entry("/skyaid craft <item>", "is the enchanted craft worth it", false),
 			new Entry("/skyaid jacob", "upcoming Jacob's contests; watch crops", true),
 			new Entry("/skyaid visitors", "what Garden visitors have cost you", true),
+			new Entry("/skyaid report", "report a bug - Discord and GitHub links", true),
 			new Entry("/skyaid mouselock", "open the preset group menu", true),
 			new Entry("/skyaid mouselock on|off", "master switch for the hold-keys", false),
 			new Entry("/skyaid mouselock <yaw> <pitch>", "set an exact angle, then lock", false),

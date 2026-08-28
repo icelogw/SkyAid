@@ -90,6 +90,7 @@ public class SkyAidClient implements ClientModInitializer {
 		dev.skyaid.feature.VisitorLedger.register();
 		dev.skyaid.feature.DungeonRunSummary.register();
 		dev.skyaid.feature.CraftProfit.register();
+		dev.skyaid.feature.ReportCommand.register();
 		dev.skyaid.feature.CrystalWaypoints.register();
 		dev.skyaid.feature.NucleusRuns.register();
 		dev.skyaid.feature.GemstoneSession.register();
