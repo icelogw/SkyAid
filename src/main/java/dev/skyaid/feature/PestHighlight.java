@@ -67,7 +67,15 @@ public final class PestHighlight {
 	 */
 	private static final long REAPPEAR_MILLIS = 10_000;
 
-	private record Vanished(String label, long at) {
+	private record Vanished(String label, BlockPos pos, long at) {
+	}
+
+	/**
+	 * The fixed "it went from here" end of a relocation line. The other end
+	 * is wherever the pest is now, so the arrow tracks the bug, never the
+	 * player.
+	 */
+	private record Trail(BlockPos from, long until) {
 	}
 
 	private static int tickCounter;
@@ -80,8 +88,8 @@ public final class PestHighlight {
 	/** Pests that disappeared recently - burrowed or despawned. */
 	private static final List<Vanished> vanished = new ArrayList<>();
 
-	/** Pest entity id -> when its relocation line expires. */
-	private static final java.util.Map<Integer, Long> lineUntil =
+	/** Pest entity id -> its relocation trail while one is showing. */
+	private static final java.util.Map<Integer, Trail> trails =
 			new java.util.HashMap<>();
 
 	private PestHighlight() {
@@ -119,14 +127,15 @@ public final class PestHighlight {
 			for (Marked pest : marked) {
 				MarkerRenderer.point(pest.pos(), pest.label(), COLOR);
 
-				// A pest that flew to a new spot gets a guide line from the
-				// player for a few seconds - following it is otherwise a
-				// scan of the whole field. Display only.
-				Long until = lineUntil.get(pest.entityId());
+				// A pest that moved keeps a faint box at its OLD spot and a
+				// line from there to wherever it is NOW - an arrow showing
+				// the move itself, anchored to the world, not the player.
+				Trail trail = trails.get(pest.entityId());
 
-				if (until != null && until > now) {
+				if (trail != null && trail.until() > now) {
+					MarkerRenderer.boxDim(trail.from(), COLOR);
 					net.minecraft.gizmos.Gizmos.line(
-									client.player.position().add(0, 1, 0),
+									net.minecraft.world.phys.Vec3.atCenterOf(trail.from()),
 									net.minecraft.world.phys.Vec3.atCenterOf(pest.pos()),
 									0xFF000000 | COLOR, 2.0f)
 							.persistForMillis(120)
@@ -144,7 +153,7 @@ public final class PestHighlight {
 		marked = List.of();
 		lastSeen.clear();
 		vanished.clear();
-		lineUntil.clear();
+		trails.clear();
 	}
 
 	/**
@@ -199,23 +208,29 @@ public final class PestHighlight {
 			seen.add(pest.entityId());
 			Marked previous = lastSeen.put(pest.entityId(), pest);
 
-			if (previous == null
-					? reappeared(pest.label(), now)
-					: relocated(previous.pos(), pest.pos())) {
-				lineUntil.put(pest.entityId(), now + LINE_MILLIS);
+			if (previous == null) {
+				BlockPos origin = reappearedFrom(pest.label(), now);
+
+				if (origin != null) {
+					trails.put(pest.entityId(), new Trail(origin, now + LINE_MILLIS));
+				}
+			} else if (relocated(previous.pos(), pest.pos())) {
+				trails.put(pest.entityId(), new Trail(previous.pos(),
+						now + LINE_MILLIS));
 			}
 		}
 
-		// Ids gone this scan are remembered by species for the reappear
-		// window, then dropped along with their lines.
+		// Ids gone this scan are remembered, with WHERE they were, for the
+		// reappear window - then dropped along with their trails.
 		for (var entry : lastSeen.entrySet()) {
 			if (!seen.contains(entry.getKey())) {
-				vanished.add(new Vanished(entry.getValue().label(), now));
+				vanished.add(new Vanished(entry.getValue().label(),
+						entry.getValue().pos(), now));
 			}
 		}
 
 		lastSeen.keySet().retainAll(seen);
-		lineUntil.keySet().retainAll(seen);
+		trails.keySet().retainAll(seen);
 
 		marked = found;
 	}
@@ -226,25 +241,25 @@ public final class PestHighlight {
 	}
 
 	/**
-	 * True when a pest of this species vanished within the reappear window;
-	 * the match is consumed so one burrow explains one resurfacing.
+	 * Where a pest of this species vanished within the reappear window, or
+	 * null; the match is consumed so one burrow explains one resurfacing.
 	 */
-	private static boolean reappeared(String label, long now) {
+	private static BlockPos reappearedFrom(String label, long now) {
 		var iterator = vanished.iterator();
-		boolean matched = false;
+		BlockPos origin = null;
 
 		while (iterator.hasNext()) {
 			Vanished gone = iterator.next();
 
 			if (now - gone.at() > REAPPEAR_MILLIS) {
 				iterator.remove();
-			} else if (!matched && gone.label().equals(label)) {
+			} else if (origin == null && gone.label().equals(label)) {
 				iterator.remove();
-				matched = true;
+				origin = gone.pos();
 			}
 		}
 
-		return matched;
+		return origin;
 	}
 
 	/**
