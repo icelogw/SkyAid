@@ -145,6 +145,29 @@ test {
 	useJUnitPlatform()
 }
 
+// The Hypixel APPLICATION key, for release builds only: taken from the
+// SKYAID_APP_KEY environment variable (a CI secret) or an untracked
+// app-key.txt beside this file - NEVER from anything committed. Builds
+// without it produce a jar with an empty key file, which the client treats
+// as "no app key"; user-supplied keys work either way.
+def appKey = providers.environmentVariable('SKYAID_APP_KEY').getOrElse(
+		file('app-key.txt').exists() ? file('app-key.txt').text.trim() : '')
+
+def generateAppKey = tasks.register('generateAppKey') {
+	def out = layout.buildDirectory.file('generated/appkey/assets/skyaid/app-key.txt')
+	inputs.property('appKey', appKey)
+	outputs.file(out)
+
+	doLast {
+		def target = out.get().asFile
+		target.parentFile.mkdirs()
+		target.text = appKey
+	}
+}
+
+sourceSets.main.resources.srcDir(
+		files(layout.buildDirectory.dir('generated/appkey')).builtBy(generateAppKey))
+
 processResources {
 	def props = [
 		version         : project.version,

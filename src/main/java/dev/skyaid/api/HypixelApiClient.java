@@ -52,7 +52,40 @@ public final class HypixelApiClient {
 	}
 
 	public static boolean hasApiKey() {
-		return !ConfigManager.get().hypixelApiKey.isBlank();
+		return !activeKey().isBlank();
+	}
+
+	/**
+	 * The key requests go out with: the user's own key when they set one,
+	 * else the APPLICATION key baked in at release-build time. The app key
+	 * is injected from a secret (env var or an untracked file) - it exists
+	 * in release jars only and never in the public source. Both are
+	 * credentials: header-only, never logged, never in a URL.
+	 */
+	private static String activeKey() {
+		String userKey = ConfigManager.get().hypixelApiKey;
+		return userKey.isBlank() ? appKey() : userKey;
+	}
+
+	private static volatile String appKey;
+
+	/** The build-injected app key; blank in builds made without the secret. */
+	private static synchronized String appKey() {
+		if (appKey == null) {
+			appKey = "";
+
+			try (var stream = HypixelApiClient.class
+					.getResourceAsStream("/assets/skyaid/app-key.txt")) {
+				if (stream != null) {
+					appKey = new String(stream.readAllBytes(),
+							java.nio.charset.StandardCharsets.UTF_8).trim();
+				}
+			} catch (Exception e) {
+				// No resource, no app key - user keys still work.
+			}
+		}
+
+		return appKey;
 	}
 
 	/**
@@ -202,7 +235,7 @@ public final class HypixelApiClient {
 				.GET();
 
 		if (requiresKey) {
-			builder.header("API-Key", ConfigManager.get().hypixelApiKey);
+			builder.header("API-Key", activeKey());
 		}
 
 		return builder.build();
