@@ -47,8 +47,11 @@ public final class JacobContests {
 			.build();
 
 	/** Contest start (millis) -> its three crops; sorted for "next". */
+	private static final long RETRY_MILLIS = 5 * 60_000L;
+
 	private static volatile TreeMap<Long, List<String>> contests = new TreeMap<>();
 	private static volatile long fetchedAt;
+	private static volatile long lastAttemptAt;
 	private static final AtomicBoolean fetching = new AtomicBoolean();
 
 	/** Start times already pinged, so one contest alerts once. */
@@ -237,10 +240,15 @@ public final class JacobContests {
 		long now = System.currentTimeMillis();
 		boolean exhausted = contests.isEmpty() || contests.lastKey() < now;
 
+		// The attempt floor holds even while exhausted - "no schedule yet"
+		// must not turn into a request per tick during an outage.
 		if ((now - fetchedAt < REFRESH_MILLIS && !exhausted)
+				|| now - lastAttemptAt < RETRY_MILLIS
 				|| !fetching.compareAndSet(false, true)) {
 			return;
 		}
+
+		lastAttemptAt = now;
 
 		HttpRequest request = HttpRequest.newBuilder(URI.create(URL))
 				.timeout(Duration.ofSeconds(15))
@@ -254,7 +262,6 @@ public final class JacobContests {
 					try {
 						if (error != null || response.statusCode() != 200) {
 							dev.skyaid.core.EventLog.event("jacob", "schedule fetch failed: " + (error != null ? error.getClass().getSimpleName() : "HTTP " + response.statusCode()));
-							fetchedAt = now - REFRESH_MILLIS + 5 * 60_000; // retry in 5m
 							return null;
 						}
 

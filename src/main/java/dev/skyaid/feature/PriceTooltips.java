@@ -35,6 +35,12 @@ public final class PriceTooltips {
 	private static volatile long fetchedAt;
 	private static final AtomicBoolean fetching = new AtomicBoolean();
 
+	// Failed fetches wait this long before retrying - tooltips redraw every
+	// frame, and an API outage must not become a request per frame.
+	private static final long RETRY_FLOOR_MILLIS = 10_000;
+	private static volatile long attemptAt;
+	private static volatile long npcAttemptAt;
+
 	/**
 	 * Skyblock item id -> NPC sell price, from the keyless items resource.
 	 * NPC prices change with game updates, not the market - a day's cache.
@@ -145,10 +151,15 @@ public final class PriceTooltips {
 	 * The response is large, so only the id -> price pairs are kept.
 	 */
 	private static void ensureNpcFresh() {
-		if (System.currentTimeMillis() - npcFetchedAt < NPC_REFRESH_MILLIS
+		long now = System.currentTimeMillis();
+
+		if (now - npcFetchedAt < NPC_REFRESH_MILLIS
+				|| now - npcAttemptAt < RETRY_FLOOR_MILLIS
 				|| !npcFetching.compareAndSet(false, true)) {
 			return;
 		}
+
+		npcAttemptAt = now;
 
 		HypixelApiClient.get("/resources/skyblock/items", NPC_REFRESH_MILLIS, false)
 				.thenAccept(body -> {
@@ -361,13 +372,18 @@ public final class PriceTooltips {
 
 	/** Kicks a snapshot refresh when stale; never blocks the caller. */
 	private static void ensureFresh() {
-		if (System.currentTimeMillis() - fetchedAt < REFRESH_MILLIS && !prices.isEmpty()) {
+		long now = System.currentTimeMillis();
+
+		if ((now - fetchedAt < REFRESH_MILLIS && !prices.isEmpty())
+				|| now - attemptAt < RETRY_FLOOR_MILLIS) {
 			return;
 		}
 
 		if (!fetching.compareAndSet(false, true)) {
 			return;
 		}
+
+		attemptAt = now;
 
 		HypixelApiClient.get("/skyblock/bazaar", REFRESH_MILLIS, false)
 				.whenComplete((body, error) -> {
