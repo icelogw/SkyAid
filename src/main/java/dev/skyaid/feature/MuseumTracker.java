@@ -403,11 +403,15 @@ public final class MuseumTracker {
 		if (set != null && setToPieces != null) {
 			for (String piece : setToPieces.getOrDefault(set, List.of())) {
 				if (remaining.getOrDefault(piece, 0) > 0) {
+					dev.skyaid.core.EventLog.event("museum", "vanish of " + itemId
+							+ " NOT a set deposit - still holding " + piece);
 					return;
 				}
 			}
 		}
 
+		dev.skyaid.core.EventLog.event("museum",
+				"marked deposited: " + key + " (from vanish of " + itemId + ")");
 		localDonations.add(key);
 		donatedFetchedAt = 0; // and let the next sync confirm it from the API
 	}

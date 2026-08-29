@@ -186,6 +186,7 @@ public final class SidebarDump {
 		}
 
 		appendHeads(out);
+		dev.skyaid.core.EventLog.dumpInto(out);
 		SignSearchAssist.dumpInto(out);
 		FairySouls.dumpInto(out);
 		PestHighlight.dumpInto(out);

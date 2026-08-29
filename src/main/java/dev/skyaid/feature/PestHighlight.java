@@ -230,6 +230,9 @@ public final class PestHighlight {
 			} else if (relocated(previous.pos(), pest.pos())) {
 				trails.put(pest.entityId(), new Trail(previous.pos(),
 						pest.pos(), now + LINE_MILLIS));
+				dev.skyaid.core.EventLog.event("pests", pest.label() + " relocated "
+						+ previous.pos().toShortString() + " -> "
+						+ pest.pos().toShortString());
 			} else {
 				// The pest keeps crawling after the jump: the arrow's far
 				// end follows it while it stays in sight.

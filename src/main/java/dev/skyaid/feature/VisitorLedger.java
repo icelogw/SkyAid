@@ -84,6 +84,8 @@ public final class VisitorLedger {
 				coinsSpent += pending.cost();
 				sessionServed++;
 				sessionSpent += pending.cost();
+				dev.skyaid.core.EventLog.event("visitors",
+						"offer ACCEPTED: ~" + pending.cost());
 				save();
 				pending = null;
 				baseline = null;
@@ -117,6 +119,8 @@ public final class VisitorLedger {
 			}
 		}
 
+		dev.skyaid.core.EventLog.event("visitors",
+				"offer noted: ~" + cost + " for " + needed);
 		pending = new Offer(cost, needed, System.currentTimeMillis());
 		baseline = countInventory(needed.keySet());
 		tickCounter = 0;

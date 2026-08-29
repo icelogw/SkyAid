@@ -117,9 +117,13 @@ public final class BazaarOrders {
 							item, sell, Double.parseDouble(
 									price.group(1).replace(",", ""))));
 
-					// A re-listed order is a new race: alert again.
+					// A re-listed order is a new race: alert again. Logged
+					// only then - the menu rescans every half second.
 					if (previous == null || previous.price() != orders.get(key).price()) {
 						alertedAt.remove(key);
+						dev.skyaid.core.EventLog.event("bazaar", "order captured: "
+								+ (sell ? "SELL " : "BUY ") + item
+								+ " @ " + orders.get(key).price());
 					}
 
 					break;
@@ -169,6 +173,7 @@ public final class BazaarOrders {
 				continue;
 			}
 
+			dev.skyaid.core.EventLog.event("bazaar", (order.sell() ? "undercut: " : "outbid: ") + order.display() + " yours " + order.price() + " top " + top);
 			alertedAt.put(entry.getKey(), top);
 			say(Component.literal((order.sell() ? "Undercut: " : "Outbid: "))
 					.withStyle(ChatFormatting.RED)

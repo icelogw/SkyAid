@@ -1,0 +1,25 @@
+name: Feature request
+description: Something SkyAid should show you
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should it do?
+      placeholder: A HUD line that shows...
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: What problem does it solve while you play?
+      placeholder: Right now I have to open the menu every time to check...
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: >
+        Note: SkyAid displays information only - it never clicks, moves, or
+        plays for you. Requests for any kind of automation will be declined.

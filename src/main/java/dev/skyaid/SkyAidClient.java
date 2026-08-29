@@ -41,6 +41,12 @@ public class SkyAidClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		// The one line every bug report's log should start from.
+		LOGGER.info("SkyAid {} loading",
+				net.fabricmc.loader.api.FabricLoader.getInstance()
+						.getModContainer(MOD_ID)
+						.map(mod -> mod.getMetadata().getVersion().getFriendlyString())
+						.orElse("?"));
 		ConfigManager.load();
 		SkyblockTracker.register();
 		SessionTracker.register();

@@ -1,0 +1,51 @@
+name: Bug report
+description: Something looks wrong, is missing, or crashed
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+      placeholder: The pest guide line disappeared when I walked toward it...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can it be reproduced?
+      placeholder: |
+        1. Warp to the Garden
+        2. Wait for a pest to burrow
+        3. Walk toward the line
+    validations:
+      required: false
+
+  - type: textarea
+    id: dump
+    attributes:
+      label: Debug dump
+      description: >
+        Run /skyaid dump right after the bug happens, then drag the file
+        skyaid-sidebar-dump.txt from your .minecraft folder into this box.
+        It contains what SkyAid saw (sidebar, tab list, open menu, recent
+        events) - it is the single most useful thing you can attach.
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: A picture of the wrong thing, if it is visible.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: SkyAid version
+      placeholder: 0.1.0
+    validations:
+      required: true

@@ -253,6 +253,7 @@ public final class JacobContests {
 				.handle((response, error) -> {
 					try {
 						if (error != null || response.statusCode() != 200) {
+							dev.skyaid.core.EventLog.event("jacob", "schedule fetch failed: " + (error != null ? error.getClass().getSimpleName() : "HTTP " + response.statusCode()));
 							fetchedAt = now - REFRESH_MILLIS + 5 * 60_000; // retry in 5m
 							return null;
 						}
@@ -281,6 +282,7 @@ public final class JacobContests {
 							parsed.put(Long.parseLong(key) * 1000L, crops);
 						}
 
+						dev.skyaid.core.EventLog.event("jacob", "schedule loaded: " + parsed.size() + " contests");
 						contests = parsed;
 						fetchedAt = now;
 					} catch (Exception e) {

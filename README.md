@@ -5,6 +5,8 @@ A client-side quality-of-life mod for Hypixel SkyBlock, for **Minecraft 26.2 (Fa
 SkyAid shows you information - prices, progress, markers, timers - and tracks
 your stats while you play.
 
+Full command reference: [COMMANDS.md](COMMANDS.md).
+
 ## What it does
 
 - **HUD** - a fully arrangeable readout (purse, coins/hour, bank, skills, pet,

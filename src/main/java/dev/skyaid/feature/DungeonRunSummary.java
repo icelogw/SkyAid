@@ -60,6 +60,7 @@ public final class DungeonRunSummary {
 			}
 
 			if (!reported && text.contains("EXTRA STATS")) {
+				dev.skyaid.core.EventLog.event("dungeon", "run ended: deaths " + deaths);
 				reported = true;
 				summarise();
 			}

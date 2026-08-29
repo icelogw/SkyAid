@@ -38,6 +38,8 @@ public final class CooldownTracker {
 			if (match.matches()) {
 				readyAtMillis = System.currentTimeMillis()
 						+ Long.parseLong(match.group(1)) * 1000;
+				dev.skyaid.core.EventLog.event("cooldown",
+						match.group(1) + "s cooldown message seen");
 			}
 		});
 	}
