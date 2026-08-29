@@ -107,13 +107,16 @@ public final class ResourcePackAccept {
 					.PackPromptStatus status,
 					net.minecraft.network.Connection connection) {
 		// Judged from the CONNECTION, not getCurrentServer(): this runs so
-		// early that the current-server field can still be null (that was
-		// why the first mixin round never fired - log-verified).
-		boolean hypixel = lastTargetHost.toLowerCase(Locale.ROOT)
-				.contains("hypixel.net")
-				|| (connection != null && connection.getRemoteAddress() != null
-						&& connection.getRemoteAddress().toString()
-								.toLowerCase(Locale.ROOT).contains("hypixel.net"));
+		// early that the current-server field can still be null.
+		boolean hypixel = dev.skyaid.parse.ServerAddresses.isHypixel(lastTargetHost);
+
+		if (!hypixel && connection != null && connection.getRemoteAddress() != null) {
+			// InetSocketAddress renders as "hostname/ip:port".
+			String remote = connection.getRemoteAddress().toString();
+			int slash = remote.indexOf('/');
+			hypixel = slash > 0 && dev.skyaid.parse.ServerAddresses.isHypixel(
+					remote.substring(0, slash));
+		}
 
 		if (!hypixel) {
 			ServerData server =
@@ -144,7 +147,6 @@ public final class ResourcePackAccept {
 	}
 
 	private static boolean isHypixel(ServerData server) {
-		return server.ip != null
-				&& server.ip.toLowerCase(Locale.ROOT).contains("hypixel.net");
+		return dev.skyaid.parse.ServerAddresses.isHypixel(server.ip);
 	}
 }
