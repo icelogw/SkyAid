@@ -37,8 +37,12 @@ body:
   - type: textarea
     id: screenshot
     attributes:
-      label: Screenshot
-      description: A picture of the wrong thing, if it is visible.
+      label: Screenshot or clip
+      description: >
+        A picture of the wrong thing, if it is visible - or a short video
+        clip if it moves (drag an .mp4 or .mov into this box; GitHub
+        accepts clips up to 10MB). A clip beats a description for anything
+        that flickers, jumps, or disappears.
     validations:
       required: false
 

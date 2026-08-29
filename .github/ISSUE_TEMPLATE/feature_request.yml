@@ -21,5 +21,4 @@ body:
   - type: markdown
     attributes:
       value: >
-        Note: SkyAid displays information only - it never clicks, moves, or
-        plays for you. Requests for any kind of automation will be declined.
+        Note: SkyAid displays information only - Requests for any kind of automation will be declined.
