@@ -547,7 +547,7 @@ public final class MuseumTracker {
 
 		if (!HypixelApiClient.hasApiKey()) {
 			say(Component.literal(
-							"The museum needs your API key - set one with /skyaid add key.")
+							"The museum needs your API key - set one with /skyaid key add.")
 					.withStyle(ChatFormatting.RED));
 			return;
 		}
@@ -1052,7 +1052,7 @@ public final class MuseumTracker {
 			if (HypixelApiClient.keyLooksRejected()) {
 				plainCentered(extractor, font, "API key invalid or expired",
 						x + width / 2, gridTop + 24, 0xFFAA2222);
-				plainCentered(extractor, font, "/skyaid add key",
+				plainCentered(extractor, font, "/skyaid key add",
 						x + width / 2, gridTop + 36, 0xFFAA2222);
 			} else {
 				plainCentered(extractor, font,

@@ -63,13 +63,16 @@ public final class StatsLookup {
 		}
 
 		if (!HypixelApiClient.hasApiKey()) {
-			error(source, "No Hypixel API key set. Run /skyaid add key to paste one in.");
+			error(source, "No Hypixel API key set. Run /skyaid key add to paste one in.");
 			return;
 		}
 
 		if (HypixelApiClient.keyLooksRejected()) {
-			error(source, "Hypixel is rejecting your API key - it has likely expired."
-					+ " Get a new one and run /skyaid add key.");
+			error(source, HypixelApiClient.hasUserKey()
+					? "Hypixel is rejecting your API key - it has likely expired."
+							+ " Get a new one and run /skyaid key add."
+					: "Hypixel is rejecting SkyAid's built-in key right now."
+							+ " Set your own with /skyaid key add.");
 			return;
 		}
 
@@ -405,7 +408,8 @@ public final class StatsLookup {
 				* PriceTooltips.sellValueById("THE_ART_OF_WAR").orElse(0);
 
 		// Gems: {"JASPER_0": "FINE"} or {"JASPER_0": {quality: "FINE"}} ->
-		// the applied gem item FINE_JASPER_GEM. Slot-unlock keys skipped.
+		// the applied gem item FINE_JASPER_GEM. Typed slots (COMBAT_0) name
+		// their gem in a companion "COMBAT_0_gem" key. Slot-unlock keys skipped.
 		var gems = extra.getCompoundOrEmpty("gems");
 
 		for (String slot : gems.keySet()) {
@@ -415,7 +419,8 @@ public final class StatsLookup {
 
 			String quality = gems.getString(slot).orElseGet(() ->
 					gems.getCompoundOrEmpty(slot).getString("quality").orElse(null));
-			String type = slot.replaceAll("_\\d+$", "");
+			String type = gems.getString(slot + "_gem")
+					.orElseGet(() -> slot.replaceAll("_[0-9]+$", ""));
 
 			if (quality != null) {
 				total += PriceTooltips.sellValueById(

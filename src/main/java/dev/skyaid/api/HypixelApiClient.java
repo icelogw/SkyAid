@@ -55,6 +55,11 @@ public final class HypixelApiClient {
 		return !activeKey().isBlank();
 	}
 
+	/** Whether the PLAYER set a key, as opposed to the app-key fallback. */
+	public static boolean hasUserKey() {
+		return !ConfigManager.get().hypixelApiKey.isBlank();
+	}
+
 	/**
 	 * The key requests go out with: the user's own key when they set one,
 	 * else the APPLICATION key baked in at release-build time. The app key

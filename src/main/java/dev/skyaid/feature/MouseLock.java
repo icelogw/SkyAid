@@ -125,19 +125,14 @@ public final class MouseLock {
 						lastLevel = client.level;
 
 						if (locked) {
-							locked = false;
-							activeSlot = 0;
-							gliding = false;
-							previewUntil = 0;
+							release();
 						}
 					}
 
 					// A "set" preview frees itself once its 3 seconds are up.
 					if (locked && previewUntil != 0
 							&& System.currentTimeMillis() >= previewUntil) {
-						locked = false;
-						gliding = false;
-						previewUntil = 0;
+						release();
 					}
 
 					if (!gliding || client.player == null) {
@@ -215,8 +210,7 @@ public final class MouseLock {
 		if (!enabled()) {
 			if (heldSlot != 0) {
 				heldSlot = 0;
-				locked = false;
-				gliding = false;
+				release();
 			}
 
 			return;
@@ -237,9 +231,7 @@ public final class MouseLock {
 
 		if (wanted == 0) {
 			heldSlot = 0;
-			locked = false;
-			activeSlot = 0;
-			gliding = false;
+			release();
 			return;
 		}
 
@@ -285,9 +277,7 @@ public final class MouseLock {
 		ConfigManager.save();
 
 		if (!value) {
-			locked = false;
-			activeSlot = 0;
-			gliding = false;
+			release();
 		}
 
 		say(Component.literal(value ? "Mouse lock enabled." : "Mouse lock disabled.")
@@ -324,13 +314,24 @@ public final class MouseLock {
 						.withStyle(ChatFormatting.GRAY)));
 	}
 
-	private static void setLocked(boolean value) {
-		// Silent by design: toggling prints nothing - rapid preset presses
-		// spammed the chat. The red MOUSE LOCKED banner
-		// above the action bar is the feedback.
-		locked = value;
+	/** Every path out of a lock resets the same four fields. */
+	private static void release() {
+		locked = false;
 		activeSlot = 0;
 		gliding = false;
+		previewUntil = 0;
+	}
+
+	private static void setLocked(boolean value) {
+		// Silent by design: the red banner is the feedback, not chat.
+		if (value) {
+			locked = true;
+			activeSlot = 0;
+			gliding = false;
+			previewUntil = 0;
+		} else {
+			release();
+		}
 	}
 
 	/**

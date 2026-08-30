@@ -97,7 +97,7 @@ public final class ApiKeyCommand {
 	 * a mistyped command can never destroy the key on its own.
 	 */
 	private static void clear() {
-		if (!HypixelApiClient.hasApiKey()) {
+		if (!HypixelApiClient.hasUserKey()) {
 			announce(Component.literal("There is no key to clear.")
 					.withStyle(ChatFormatting.GRAY));
 			return;
