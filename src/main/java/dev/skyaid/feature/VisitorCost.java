@@ -127,11 +127,16 @@ public final class VisitorCost {
 				String amount = "1";
 				int marker = text.lastIndexOf(" x");
 
-				if (marker > 0 && text.substring(marker + 2).chars()
-						.allMatch(Character::isDigit)
-						&& marker + 2 < text.length()) {
-					name = text.substring(0, marker).trim();
-					amount = text.substring(marker + 2);
+				// "x1,024" - thousands separators count as digits here.
+				if (marker > 0 && marker + 2 < text.length()
+						&& text.substring(marker + 2).chars()
+								.allMatch(c -> Character.isDigit(c) || c == ',')) {
+					String digits = text.substring(marker + 2).replace(",", "");
+
+					if (!digits.isEmpty()) {
+						name = text.substring(0, marker).trim();
+						amount = digits;
+					}
 				}
 
 				if (!name.isEmpty()) {
