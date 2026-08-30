@@ -1,7 +1,5 @@
-DEV-NOTES.md
-TODO.md
-MODRINTH.md
-modrinth-icon-512.png
+notes/
+app-key.txt
 tools/
 .gradle/
 build/
@@ -13,4 +11,3 @@ run/
 .project
 .settings/
 bin/
-app-key.txt
