@@ -54,6 +54,14 @@ public final class VisitorLedger {
 				return;
 			}
 
+			// Leaving the Garden cancels the offer outright - a lobby or hub
+			// inventory has none of the items, which read as "served".
+			if (!onGarden()) {
+				pending = null;
+				baseline = null;
+				return;
+			}
+
 			if (System.currentTimeMillis() - pending.at() > WINDOW_MILLIS) {
 				pending = null;
 				baseline = null;
@@ -124,6 +132,12 @@ public final class VisitorLedger {
 		pending = new Offer(cost, needed, System.currentTimeMillis());
 		baseline = countInventory(needed.keySet());
 		tickCounter = 0;
+	}
+
+	private static boolean onGarden() {
+		return dev.skyaid.core.SkyblockTracker.state().location()
+				.map(zone -> zone.contains("Garden") || zone.startsWith("Plot"))
+				.orElse(false);
 	}
 
 	/** Current inventory counts of the given display names. */
