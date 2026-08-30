@@ -331,8 +331,11 @@ public final class MuseumTracker {
 		for (int i = 0; i < inventory.getContainerSize(); i++) {
 			String id = PriceTooltips.extractId(inventory.getItem(i));
 
+			// Canonical keys, so the set-completeness check in markDeposited
+			// can find alternate-id pieces still in hand.
 			if (id != null) {
-				current.merge(id, inventory.getItem(i).getCount(), Integer::sum);
+				current.merge(canonicalOf(id),
+						inventory.getItem(i).getCount(), Integer::sum);
 			}
 		}
 
@@ -340,11 +343,7 @@ public final class MuseumTracker {
 		// all (a cancelled Confirm Donation hands the items back).
 		if (!localDonations.isEmpty()) {
 			for (String id : current.keySet()) {
-				String canonical = mappedIds == null ? id
-						: mappedIds.getOrDefault(id, id);
-				String set = pieceToSet == null ? null : pieceToSet.get(canonical);
-
-				if (localDonations.remove(set != null ? set : canonical)) {
+				if (localDonations.remove(entryKeyOf(id))) {
 					donatedFetchedAt = 0;
 				}
 			}
@@ -377,6 +376,18 @@ public final class MuseumTracker {
 	}
 
 	/** An id that left the inventory mid-museum - mark its entry donated. */
+	/** Alternate spellings collapse to one canonical id. */
+	private static String canonicalOf(String itemId) {
+		return mappedIds == null ? itemId : mappedIds.getOrDefault(itemId, itemId);
+	}
+
+	/** The museum entry an item counts toward: its set, else its canonical id. */
+	private static String entryKeyOf(String itemId) {
+		String canonical = canonicalOf(itemId);
+		String set = pieceToSet == null ? null : pieceToSet.get(canonical);
+		return set != null ? set : canonical;
+	}
+
 	private static void markDeposited(String itemId, Map<String, Integer> remaining) {
 		Map<String, Set<String>> loadedWings = wings;
 		Set<String> loadedDonated = donated;
@@ -385,8 +396,7 @@ public final class MuseumTracker {
 			return;
 		}
 
-		String canonical = mappedIds == null ? itemId
-				: mappedIds.getOrDefault(itemId, itemId);
+		String canonical = canonicalOf(itemId);
 		String set = pieceToSet == null ? null : pieceToSet.get(canonical);
 		String key = set != null ? set : canonical;
 
@@ -458,10 +468,7 @@ public final class MuseumTracker {
 			return Optional.empty();
 		}
 
-		// Starred and renamed variants first resolve to their canonical id,
-		// then a piece resolves to its set.
-		String canonical = mappedIds == null ? itemId
-				: mappedIds.getOrDefault(itemId, itemId);
+		String canonical = canonicalOf(itemId);
 		String set = pieceToSet == null ? null : pieceToSet.get(canonical);
 		String key = set != null ? set : canonical;
 
