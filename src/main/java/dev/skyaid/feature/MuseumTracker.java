@@ -426,6 +426,9 @@ public final class MuseumTracker {
 		donatedFetchedAt = 0; // and let the next sync confirm it from the API
 	}
 
+	/** Whose museum the optimistic/cached state belongs to. */
+	private static volatile String lastIdentity;
+
 	/** The profile-then-museum fetch chain, shared by command and background. */
 	private static java.util.concurrent.CompletableFuture<Optional<JsonObject>> fetch(
 			String uuid) {
@@ -437,6 +440,20 @@ public final class MuseumTracker {
 					if (profileId == null) {
 						return java.util.concurrent.CompletableFuture.completedFuture(
 								Optional.<JsonObject>empty());
+					}
+
+					// A different account or profile invalidates everything
+					// remembered about the previous one.
+					String identity = uuid + "/" + profileId;
+
+					if (!identity.equals(lastIdentity)) {
+						if (lastIdentity != null) {
+							localDonations.clear();
+							donated = null;
+							donatedFetchedAt = 0;
+						}
+
+						lastIdentity = identity;
 					}
 
 					return HypixelApiClient.get("/skyblock/museum?profile=" + profileId,
